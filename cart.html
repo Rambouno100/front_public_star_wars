@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito — Star Wars Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/nav.js" defer></script>
+    <script src="js/footer.js" defer></script>
+    <style>
+        body { background: #0a0a0a; color: #e5e5e5; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <header id="main-nav"></header>
+
+    <main class="max-w-2xl mx-auto w-full flex-1 px-6 py-16">
+        <h1 class="text-xs uppercase tracking-widest text-neutral-500 mb-10 text-center">Your Collection</h1>
+
+        <section id="cart-container" class="min-h-[200px] border border-neutral-800 rounded-xl p-6">
+            <p class="text-xs uppercase tracking-widest text-neutral-600 text-center py-16">Cargando...</p>
+        </section>
+
+        <footer class="mt-6 flex justify-between items-center px-1">
+            <p class="text-sm text-neutral-400">Total
+                <span class="ml-2 text-white font-medium">$<span id="cart-total">0.00</span></span>
+            </p>
+
+            <button id="btn-checkout" class="px-8 py-3 rounded-full bg-white text-black text-xs uppercase tracking-widest hover:bg-neutral-200 active:scale-95 transition-all">Checkout</button>
+        </footer>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script src="js/cart.js"></script>
+</body>
+
+</html>
