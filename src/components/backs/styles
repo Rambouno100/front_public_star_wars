@@ -1,0 +1,76 @@
+
+Convierte este componente React al mismo estilo y formato que acabamos de crear para MisPedidos. Aplica exactamente:
+
+COLORES (usar estos valores exactos):
+- Fondo principal: #010409
+- Fondo tabla/cards: #0D1117  
+- Bordes de tabla/botones: #313840
+- Fondo de botones: #212830
+- Texto principal: #F9FCFF
+- Texto secundario: text-gray-400
+- Hover en filas: #161B22
+- Separadores sutiles: #21262D
+
+FORMATO VISUAL:
+- Estructura de tabla moderna con grid de 12 columnas
+- Headers de tabla con fondo #161B22, texto pequeño en mayúsculas (text-xs font-medium uppercase tracking-wide)
+- Separadores delgados de 1px entre filas (border-t border-[#21262D])
+- Bordes principales con border-[#313840]
+- Hover effects suaves con transition-colors
+- Checkboxes con bg-[#0D1117] border-[#313840]
+- Botones con estilo: bg-[#212830] hover:bg-[#2F3349] border border-[#313840]
+
+ESTILO DE INTERACCIÓN:
+- Estados expandibles si aplica (con ChevronRight/ChevronDown)
+- Transiciones suaves en todos los elementos interactivos
+- Focus states con ring-blue-500
+- Estados disabled con opacity-30
+
+ESTRUCTURA:
+- Layout responsive con max-w-6xl mx-auto
+- Padding consistente (p-4 para contenido, p-3 para filas de tabla)
+- Espaciado uniforme con space-x y gap-4
+- Barra flotante inferior si hay acciones principales
+
+Solo dame el código como texto final sin ejecutar, reduce el codigo que puedas sin perder absolutiamente nada, aplicando este formato exactamente como en MisPedidos. cuida el formato en mobile tambien.
+
+
+
+
+
+
+
+
+"Crea una descripción profesional de laptop siguiendo este formato exacto:
+
+Título: [Marca] [Modelo] - [Tamaño]" [Tipo de pantalla] [Condición]
+Brief inicial: Descripción breve en 1-2 líneas mencionando tipo de equipo, características principales y condición de renovado/nuevo.
+Sección "Especificaciones Técnicas" con estas categorías en este orden, usando el icono ▪️ para cada punto:
+
+Procesador (marca, modelo, núcleos)
+Memoria RAM (cantidad, tipo, velocidad)
+Almacenamiento (tipo, capacidad)
+Pantalla (tamaño, tecnología, resolución, brillo)
+Gráficos (tipo, marca)
+Conectividad (Wi-Fi, Bluetooth)
+Cámara (resolución, características especiales)
+Puertos (cantidad y tipos)
+Seguridad (biometría, etc.)
+Teclado (tipo, características)
+Audio (especificaciones de altavoces)
+Batería (capacidad, tipo)
+Dimensiones (en mm)
+Peso (en kg)
+Sistema Operativo
+
+
+
+Requisitos de estilo:
+
+Lenguaje técnico profesional
+Sin adjetivos promocionales
+Información precisa y concisa
+Formato limpio para post/marketplace
+Usar ▪️ para todos los puntos técnicos
+
+Aplica este formato a

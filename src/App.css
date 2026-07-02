@@ -1,0 +1,5 @@
+/* Solo mantén los estilos que realmente uses */
+.App {
+  background-color: #010409;
+  min-height: 100vh;
+}

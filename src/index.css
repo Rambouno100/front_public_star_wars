@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Tema (claro / oscuro) — paleta monocroma estilo Threads (sin verde).
+   Casi todo deriva de 5 tripletas RGB para poder swapear el tema cambiando
+   solo `data-theme`. Los componentes usan var(--...) o clases brand-* (que en
+   tailwind.config.js apuntan a estas variables).
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* DARK (default) */
+  --bg-ink-rgb: 10 10 11;
+  --bg-elev-rgb: 21 21 27;
+  --text-rgb: 245 245 240;
+  --accent-rgb: 245 245 240;   /* acción primaria = blanco sobre oscuro */
+  --danger-rgb: 255 107 107;
+
+  --bg-panel: #0F0F12;
+  --ink-solid: #050507;
+}
+
+:root[data-theme="light"] {
+  /* LIGHT (similar al claro de Armalo) */
+  --bg-ink-rgb: 245 245 240;
+  --bg-elev-rgb: 240 239 234;
+  --text-rgb: 10 10 11;
+  --accent-rgb: 10 10 11;      /* acción primaria = negro sobre claro */
+  --danger-rgb: 209 49 49;
+
+  --bg-panel: #FFFFFF;
+  --ink-solid: #FFFFFF;
+}
+
+:root {
+  --bg-ink:          rgb(var(--bg-ink-rgb));
+  --bg-elev:         rgb(var(--bg-elev-rgb));
+  --color-text:      rgb(var(--text-rgb));
+  --color-cream:     rgb(var(--text-rgb));
+  --color-muted:     rgb(var(--text-rgb) / 0.55);
+  --color-faint:     rgb(var(--text-rgb) / 0.32);
+  --hairline:        rgb(var(--text-rgb) / 0.07);
+  --hairline-strong: rgb(var(--text-rgb) / 0.14);
+  --accent:          rgb(var(--accent-rgb));
+  --accent-ink:      rgb(var(--bg-ink-rgb));     /* texto sobre el acento */
+  --accent-dim:      rgb(var(--accent-rgb) / 0.65);
+  --accent-tint:     rgb(var(--accent-rgb) / 0.08);
+  --accent-tint-25:  rgb(var(--accent-rgb) / 0.22);
+  --danger:          rgb(var(--danger-rgb));
+  --nav-bg:          rgb(var(--bg-ink-rgb) / 0.65);
+  --nav-bg-scrolled: rgb(var(--bg-ink-rgb) / 0.9);
+  --star-color:      rgb(var(--text-rgb) / 0.05);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-ink);
+  color: var(--color-text);
+  min-height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--bg-ink);
+  position: relative;
+}
+
+/* Fondo estelar sutil — se adapta al tema (puntos claros en oscuro, oscuros en claro) */
+#root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 12% 18%, var(--star-color) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 72% 34%, var(--star-color) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 38% 72%, var(--star-color) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 88% 88%, var(--star-color) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 22% 88%, var(--star-color) 0 1px, transparent 1.5px);
+  background-size: 280px 280px;
+  opacity: 0.6;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-ink); }
+::-webkit-scrollbar-thumb {
+  background: var(--hairline-strong);
+  border: 2px solid var(--bg-ink);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-faint); }
+
+button, a, [role="button"] {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+  transition-duration: 0.25s !important;
+}
+
+button:not([style*="transition"]),
+a:not([style*="transition"]),
+[role="button"]:not([style*="transition"]) {
+  transition-property: background-color, color, border-color, box-shadow, transform, opacity;
+}
+
+button:active:not(:disabled), a:active, [role="button"]:active {
+  transform: scale(0.97);
+  transition-duration: 0.12s !important;
+}

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Airdrop Package 3D Azteca">
+  <title>Airdrop · Lucide Package 3D + sparkles + greca azteca</title>
+  <g stroke="#A3FF7C" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+
+    <!-- ── Sparkles flotantes ── -->
+    <path d="M32 6 Q32 14 38 14 Q32 14 32 22 Q32 14 26 14 Q32 14 32 6 Z" />
+    <path d="M14 18 Q14 23 18 23 Q14 23 14 28 Q14 23 10 23 Q14 23 14 18 Z" />
+    <path d="M50 12 Q50 16 53 16 Q50 16 50 20 Q50 16 47 16 Q50 16 50 12 Z" />
+
+    <!-- ── Package 3D (Lucide hex) ── -->
+    <path d="M32 30 L44 36 V48 L32 54 L20 48 V36 Z" />
+    <path d="M20 36 L32 42 L44 36" />
+    <path d="M32 42 V54" />
+
+    <!-- ── Greca azteca (step-fret) en cara frontal izquierda ── -->
+    <path d="M22 44 H28 V47 H25 V50 H22 Z" />
+
+    <!-- ── Greca azteca (step-fret espejo) en cara frontal derecha ── -->
+    <path d="M42 44 H36 V47 H39 V50 H42 Z" />
+
+  </g>
+</svg>
