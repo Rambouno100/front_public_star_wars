@@ -270,7 +270,7 @@ const CartButton = ({ product, cartHook }) => {
 
 const WhatsAppButton = ({ product }) => {
   const handleWhatsApp = () => {
-    const message = `Hola! Me interesa esta laptop:%0A%0A*ID: ${product.id_product}*%0A*Nombre: ${product.name}*%0APrecio: S/${product.price}%0A%0A¿Podrías darme más información?`;
+    const message = `Hola! Me interesa este producto:%0A%0A*ID: ${product.id_product}*%0A*Nombre: ${product.name}*%0APrecio: S/${product.price}%0A%0A¿Podrías darme más información?`;
     window.open(`https://wa.me/51956787186?text=${message}`, '_blank');
   };
 
@@ -410,7 +410,7 @@ const ProductDetail = ({ product, onBack, cartHook }) => {
   ].filter(spec => spec.value);
 
   const handleWhatsApp = () => {
-    const message = `Hola! Me interesa esta laptop:%0A%0A*ID: ${product.id_product}*%0A*Nombre: ${product.name}*%0APrecio: S/${product.price}%0A%0A¿Podrías darme más información?`;
+    const message = `Hola! Me interesa este producto:%0A%0A*ID: ${product.id_product}*%0A*Nombre: ${product.name}*%0APrecio: S/${product.price}%0A%0A¿Podrías darme más información?`;
     window.open(`https://wa.me/51956787186?text=${message}`, '_blank');
   };
 

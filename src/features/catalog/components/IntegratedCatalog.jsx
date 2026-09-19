@@ -13,6 +13,9 @@ export default function IntegratedCatalog() {
   const [search, setSearch] = useState('');
   const [purpose, setPurpose] = useState(null);
   const [flashOnly, setFlashOnly] = useState(false);
+  const [faction, setFaction] = useState(null);
+  const [era, setEra] = useState(null);
+  const [collectibleOnly, setCollectibleOnly] = useState(false);
   const debounceRef = useRef(null);
 
   const handleSearchChange = useCallback((value) => {
@@ -30,7 +33,7 @@ export default function IntegratedCatalog() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useProducts({ q: search, purpose, flashOnly });
+  } = useProducts({ q: search, purpose, flashOnly, faction, era, collectibleOnly, limit: 20 });
 
   const products = useMemo(
     () => data?.pages?.flatMap(p => p.items) ?? [],
@@ -106,6 +109,12 @@ export default function IntegratedCatalog() {
       onPurposeChange={setPurpose}
       flashOnly={flashOnly}
       onFlashOnlyChange={setFlashOnly}
+      faction={faction}
+      onFactionChange={setFaction}
+      era={era}
+      onEraChange={setEra}
+      collectibleOnly={collectibleOnly}
+      onCollectibleOnlyChange={setCollectibleOnly}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={fetchNextPage}

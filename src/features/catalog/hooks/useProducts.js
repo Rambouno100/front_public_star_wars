@@ -1,11 +1,11 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { getProducts, getProduct } from '../api';
 
-export const useProducts = ({ q = '', limit, purpose = null, flashOnly = false } = {}) =>
+export const useProducts = ({ q = '', limit, purpose = null, flashOnly = false, faction = null, era = null, collectibleOnly = false } = {}) =>
   useInfiniteQuery({
-    queryKey: ['products', q, limit, purpose, flashOnly],
+    queryKey: ['products', q, limit, purpose, flashOnly, faction, era, collectibleOnly],
     queryFn: ({ pageParam }) =>
-      getProducts({ cursor: pageParam, q, limit, purpose, flashOnly }),
+      getProducts({ cursor: pageParam, q, limit, purpose, flashOnly, faction, era, collectibleOnly }),
     getNextPageParam: last => last.next_cursor ?? undefined,
     staleTime: 5 * 60 * 1000,
     placeholderData: prev => prev,

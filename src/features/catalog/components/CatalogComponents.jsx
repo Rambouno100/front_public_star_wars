@@ -156,17 +156,23 @@ const ColumnSelector = ({ columnas, columnasVisibles, onChange }) => {
  );
 };
 
+// Placeholder inline (data-URI) para no pegarle a dominios externos que cuelgan.
+const NO_IMAGE =
+  "data:image/svg+xml;charset=utf-8," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#e9e5db"/></svg>'
+  );
+
 const ProductImage = ({ product }) => {
- const imageUrl = product.main_image || (product.images && product.images[0]?.image);
+ const imageUrl = product.main_image || (product.images && (product.images[0]?.url || product.images[0]?.image));
 
  return (
    <img
-     src={imageUrl || "https://armalo.com/api/media/products/noimage.jpg"}
+     src={imageUrl || NO_IMAGE}
      alt={product.name || 'Producto'}
      className="w-20 h-20 object-cover rounded-md"
-     onError={(e) => {
-       e.target.src = "https://armalo.com/api/media/products/ASUSVivobookS15.webp";
-     }}
+     loading="lazy"
+     onError={(e) => { e.target.src = NO_IMAGE; }}
    />
  );
 };
@@ -275,7 +281,7 @@ const ActionButtons = ({ product, onViewDetail }) => (
  <div className="flex items-center gap-1">
    <button 
      onClick={() => {
-       const message = `Hola! Me interesa esta pieza Star Wars:%0A%0A*id: ${product.id_product}*%0A*Nombre: ${product.name}*%0APrecio: S/${product.price_offer}%0A%0A¿Podrías darme más información?`;
+       const message = `Hola! Me interesa este producto:%0A%0A*id: ${product.id_product}*%0A*Nombre: ${product.name}*%0APrecio: S/${product.price_offer}%0A%0A¿Podrías darme más información?`;
        window.open(`https://wa.me/51956787186?text=${message}`, '_blank');
      }}
      className="flex items-center justify-center w-7 h-7 rounded-full bg-[#212830] hover:bg-[#2F3349] text-[#F9FCFF] transition-all duration-200 hover:scale-105"

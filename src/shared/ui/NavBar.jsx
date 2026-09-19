@@ -38,24 +38,17 @@ const NAV_LINKS = [
   { to: '/mis-pedidos', label: 'Pedidos' },
 ];
 
-/* ── Logo: imagen de origen único (src/assets/logo.svg) + wordmark ── */
+/* ── Logo: imagen de origen único (src/assets/logo.svg), sin wordmark ── */
 const Logo = () => (
   <Link
     to="/"
     style={{
       textDecoration: 'none', flexShrink: 0,
-      display: 'flex', alignItems: 'center', gap: 10,
+      display: 'flex', alignItems: 'center',
     }}
   >
-    <img src={logoUrl} alt="Armalo" width="22" height="22"
+    <img src={logoUrl} alt="Armalo" width="86" height="33"
       style={{ display: 'block', flexShrink: 0 }} />
-    <span style={{
-      fontFamily: fDisplay, fontWeight: 600, fontSize: 15,
-      letterSpacing: '-0.02em', color: CREAM,
-      lineHeight: 1,
-    }}>
-      Armalo
-    </span>
   </Link>
 );
 

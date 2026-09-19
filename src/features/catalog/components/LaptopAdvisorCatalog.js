@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Star as StarIcon } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
 
 /* ── Design tokens ───────────────────────────────────────────── */
@@ -124,7 +125,14 @@ const FilterChip = ({ label, count, active, onClick }) => (
 
 /* ── helpers ─────────────────────────────────────────────────── */
 // Buckets temáticos: figura/sable/casco/lego. `category` los lleva en lowercase.
-const PURPOSE_VALUES = new Set(['figura', 'sable', 'casco', 'lego']);
+// Categorías de origen único: slug en DB (Product.category) → nombre visible.
+const CATEGORIES = [
+  { slug: 'lego-build',   label: 'Sets de Construcción' },
+  { slug: 'lego-helmet',  label: 'Cascos Coleccionables' },
+  { slug: 'lego-keyring', label: 'Llaveros & Accesorios' },
+  { slug: 'posters',      label: 'Pósters & Arte' },
+];
+const PURPOSE_VALUES = new Set(CATEGORIES.map(c => c.slug));
 
 const getPurpose = (p) => {
   for (const v of [p?.category, p?.type, p?.purpose]) {
@@ -134,12 +142,73 @@ const getPurpose = (p) => {
   return '';
 };
 
+// "Oferta Relámpago" = etiqueta 'Price/Quality' del admin (se acepta el legacy 'true').
 const isFlashOffer = (p) =>
-  p?.approved === true || p?.approved === 'true';
+  p?.approved === 'Price/Quality' || p?.approved === 'true' || p?.approved === true;
+
+/* ── Rating (estrellas) ──────────────────────────────────────── */
+const STAR = '#FFB547';
+
+const toFive = (score) => {
+  const s = parseFloat(score);
+  if (!Number.isFinite(s)) return null;
+  if (s <= 5) return s;
+  if (s <= 10) return s / 2;
+  return s / 20;
+};
+
+const Stars = ({ score, size = 12 }) => {
+  const value = toFive(score);
+  if (value == null) return null;
+  const clamped = Math.max(0, Math.min(5, value));
+  return (
+    <span style={{ display: 'inline-flex', gap: 1, alignItems: 'center' }} aria-label={`${clamped.toFixed(1)} de 5`}>
+      {Array.from({ length: 5 }).map((_, i) => {
+        const fill = Math.max(0, Math.min(1, clamped - i));
+        return (
+          <span key={i} style={{ position: 'relative', display: 'inline-block', width: size, height: size, lineHeight: 0 }}>
+            <StarIcon size={size} style={{ fill: 'rgba(245,245,240,0.18)', color: 'rgba(245,245,240,0.18)' }} />
+            {fill > 0 && (
+              <span style={{ position: 'absolute', inset: 0, overflow: 'hidden', width: `${fill * 100}%` }}>
+                <StarIcon size={size} style={{ fill: STAR, color: STAR }} />
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+};
+
+/* ── Filtro controlado/no-controlado (componente compartido) ── */
+// Si el padre pasa el setter → modo controlado (estado vive en el padre).
+// Si no → estado local interno (landing usa el catálogo sin pasar setters).
+const useFilter = (externalValue, externalSetter, initialInternal) => {
+  const [internal, setInternal] = useState(initialInternal);
+  const isControlled = typeof externalSetter === 'function';
+  return [
+    isControlled ? externalValue : internal,
+    (v) => { if (isControlled) externalSetter(v); else setInternal(v); },
+  ];
+};
 
 /* ── Sidebar (desktop) ───────────────────────────────────────── */
-const Sidebar = ({ counts, selectedQuadrant, onSelectQuadrant, purposeFilter, setPurposeFilter }) => {
-  const hasFilters = selectedQuadrant || purposeFilter;
+const Sidebar = ({
+  counts, selectedQuadrant, onSelectQuadrant,
+  purposeFilter, setPurposeFilter,
+  factions, faction, setFaction,
+  eras, era, setEra,
+  collectibleOnly, setCollectibleOnly,
+}) => {
+  const hasFilters = selectedQuadrant || purposeFilter || faction || era || collectibleOnly;
+
+  const clearAll = () => {
+    onSelectQuadrant(null);
+    setPurposeFilter(null);
+    setFaction(null);
+    setEra(null);
+    setCollectibleOnly(false);
+  };
 
   return (
     <div style={{ position: 'sticky', top: 80 }}>
@@ -150,33 +219,54 @@ const Sidebar = ({ counts, selectedQuadrant, onSelectQuadrant, purposeFilter, se
         active={selectedQuadrant === 'legendary'}
         onClick={() => onSelectQuadrant(selectedQuadrant === 'legendary' ? null : 'legendary')}
       />
+      <FilterRow
+        label="Coleccionables" count={counts.collectible}
+        active={!!collectibleOnly}
+        onClick={() => setCollectibleOnly(!collectibleOnly)}
+      />
 
       <Micro style={{ display: 'block', marginTop: 36, marginBottom: 18 }}>Categoría</Micro>
 
-      <FilterRow
-        label="Figuras" count={counts.figura}
-        active={purposeFilter === 'figura'}
-        onClick={() => setPurposeFilter(purposeFilter === 'figura' ? null : 'figura')}
-      />
-      <FilterRow
-        label="Sables" count={counts.sable}
-        active={purposeFilter === 'sable'}
-        onClick={() => setPurposeFilter(purposeFilter === 'sable' ? null : 'sable')}
-      />
-      <FilterRow
-        label="Cascos" count={counts.casco}
-        active={purposeFilter === 'casco'}
-        onClick={() => setPurposeFilter(purposeFilter === 'casco' ? null : 'casco')}
-      />
-      <FilterRow
-        label="LEGO" count={counts.lego}
-        active={purposeFilter === 'lego'}
-        onClick={() => setPurposeFilter(purposeFilter === 'lego' ? null : 'lego')}
-      />
+      {CATEGORIES.map(({ slug, label }) => (
+        <FilterRow
+          key={slug}
+          label={label} count={counts[slug]}
+          active={purposeFilter === slug}
+          onClick={() => setPurposeFilter(purposeFilter === slug ? null : slug)}
+        />
+      ))}
+
+      {factions.length > 0 && (
+        <>
+          <Micro style={{ display: 'block', marginTop: 36, marginBottom: 18 }}>Facción</Micro>
+          {factions.map(([value, count]) => (
+            <FilterRow
+              key={value}
+              label={value} count={count}
+              active={faction === value}
+              onClick={() => setFaction(faction === value ? null : value)}
+            />
+          ))}
+        </>
+      )}
+
+      {eras.length > 0 && (
+        <>
+          <Micro style={{ display: 'block', marginTop: 36, marginBottom: 18 }}>Era</Micro>
+          {eras.map(([value, count]) => (
+            <FilterRow
+              key={value}
+              label={value} count={count}
+              active={era === value}
+              onClick={() => setEra(era === value ? null : value)}
+            />
+          ))}
+        </>
+      )}
 
       {hasFilters && (
         <button
-          onClick={() => { onSelectQuadrant(null); setPurposeFilter(null); }}
+          onClick={clearAll}
           style={{
             marginTop: 28, fontFamily: fMono, fontSize: 10,
             letterSpacing: '0.16em', textTransform: 'uppercase',
@@ -195,7 +285,13 @@ const Sidebar = ({ counts, selectedQuadrant, onSelectQuadrant, purposeFilter, se
 };
 
 /* ── Filter bar (mobile horizontal) ──────────────────────────── */
-const FilterBar = ({ counts, selectedQuadrant, onSelectQuadrant, purposeFilter, setPurposeFilter }) => {
+const FilterBar = ({
+  counts, selectedQuadrant, onSelectQuadrant,
+  purposeFilter, setPurposeFilter,
+  factions, faction, setFaction,
+  eras, era, setEra,
+  collectibleOnly, setCollectibleOnly,
+}) => {
   return (
     <div style={{
       display: 'flex', gap: 8, overflowX: 'auto',
@@ -204,10 +300,16 @@ const FilterBar = ({ counts, selectedQuadrant, onSelectQuadrant, purposeFilter, 
       scrollbarWidth: 'none',
     }}>
       <FilterChip label="Oferta" count={counts.legendary} active={selectedQuadrant === 'legendary'} onClick={() => onSelectQuadrant(selectedQuadrant === 'legendary' ? null : 'legendary')} />
-      <FilterChip label="Figuras" count={counts.figura}   active={purposeFilter === 'figura'}       onClick={() => setPurposeFilter(purposeFilter === 'figura' ? null : 'figura')} />
-      <FilterChip label="Sables"  count={counts.sable}    active={purposeFilter === 'sable'}        onClick={() => setPurposeFilter(purposeFilter === 'sable' ? null : 'sable')} />
-      <FilterChip label="Cascos"  count={counts.casco}    active={purposeFilter === 'casco'}        onClick={() => setPurposeFilter(purposeFilter === 'casco' ? null : 'casco')} />
-      <FilterChip label="LEGO"    count={counts.lego}     active={purposeFilter === 'lego'}         onClick={() => setPurposeFilter(purposeFilter === 'lego' ? null : 'lego')} />
+      <FilterChip label="Colección" count={counts.collectible} active={!!collectibleOnly} onClick={() => setCollectibleOnly(!collectibleOnly)} />
+      {CATEGORIES.map(({ slug, label }) => (
+        <FilterChip key={slug} label={label} count={counts[slug]} active={purposeFilter === slug} onClick={() => setPurposeFilter(purposeFilter === slug ? null : slug)} />
+      ))}
+      {factions.map(([value, count]) => (
+        <FilterChip key={value} label={value} count={count} active={faction === value} onClick={() => setFaction(faction === value ? null : value)} />
+      ))}
+      {eras.map(([value, count]) => (
+        <FilterChip key={value} label={value} count={count} active={era === value} onClick={() => setEra(era === value ? null : value)} />
+      ))}
     </div>
   );
 };
@@ -286,6 +388,18 @@ const ProductCard = ({ product, onViewDetail }) => {
           {product.name}
         </h3>
 
+        {/* Rating — slot fijo para alinear cards (prueba social) */}
+        <div style={{ minHeight: 18, marginBottom: 10 }}>
+          {product.score != null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Stars score={product.score} size={12} />
+              <span style={{ fontFamily: fMono, fontSize: 10, color: MUTED, letterSpacing: '0.04em' }}>
+                {toFive(product.score)?.toFixed(1)}
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Tag — altura fija (incluso si no hay tag, reserva el espacio para alineación) */}
         <div style={{ minHeight: 22, marginBottom: 12 }}>
           {tag && <Tag label={tag.label} variant={tag.variant} />}
@@ -350,7 +464,7 @@ const ProductCard = ({ product, onViewDetail }) => {
           fontFamily: fBody, fontSize: 11, color: MUTED,
           lineHeight: 1.5, margin: '0 0 14px',
         }}>
-          Entrega <span style={{ color: CREAM, fontWeight: 600 }}>GRATIS</span> en Lima · 24–48h
+          Entrega a todo el <span style={{ color: CREAM, fontWeight: 600 }}>Perú</span>
         </p>
 
         {/* CTA "Ver detalle" — siempre visible, hover acento */}
@@ -392,32 +506,39 @@ export const LaptopAdvisorCatalog = ({
   onPurposeChange,
   flashOnly: flashOnlyProp,
   onFlashOnlyChange,
+  faction: factionProp,
+  onFactionChange,
+  era: eraProp,
+  onEraChange,
+  collectibleOnly: collectibleOnlyProp,
+  onCollectibleOnlyChange,
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
 }) => {
   const { isMobile, isTablet } = useBreakpoint();
 
-  // Modo controlado (IntegratedCatalog pasa setters → filtro va al back) vs
-  // uncontrolled (LandingPage2 no pasa setters → estado local + filter cliente).
-  const isControlled = typeof onPurposeChange === 'function';
-  const [internalPurpose, setInternalPurpose]   = useState(null);
-  const [internalFlash, setInternalFlash]       = useState(false);
-  const purpose   = isControlled ? (purposeProp ?? null)   : internalPurpose;
-  const flashOnly = isControlled ? !!flashOnlyProp         : internalFlash;
-  const setPurpose = (v) => (isControlled ? onPurposeChange(v)        : setInternalPurpose(v));
-  const setFlash   = (v) => (isControlled ? onFlashOnlyChange?.(v)    : setInternalFlash(v));
+  // Filtros controlados (padre pasa setters → estado vive arriba) o
+  // no-controlados (landing → estado local interno + filtro cliente).
+  const [purpose, setPurpose] = useFilter(purposeProp, onPurposeChange, null);
+  const [flashOnly, setFlash] = useFilter(flashOnlyProp, onFlashOnlyChange, false);
+  const [faction, setFaction] = useFilter(factionProp, onFactionChange, null);
+  const [era, setEra] = useFilter(eraProp, onEraChange, null);
+  const [collectibleOnly, setCollectibleOnly] = useFilter(collectibleOnlyProp, onCollectibleOnlyChange, false);
 
   const safe = useMemo(() => Array.isArray(products) ? products : [], [products]);
 
   // Filtro cliente como capa defensiva: garantiza UI consistente aunque el back no
-  // esté reiniciado, y es la única fuente de verdad en modo uncontrolled (landing).
+  // esté reiniciado, y es la única fuente de verdad en modo no-controlado (landing).
   const filtered = useMemo(() => safe.filter(p => {
     if (!p || p.is_active === false) return false;
     if (flashOnly && !isFlashOffer(p)) return false;
     if (purpose && getPurpose(p) !== purpose) return false;
+    if (faction && String(p.faction ?? '').toLowerCase() !== faction.toLowerCase()) return false;
+    if (era && String(p.era ?? '').toLowerCase() !== era.toLowerCase()) return false;
+    if (collectibleOnly && !p.is_collectible) return false;
     return true;
-  }), [safe, flashOnly, purpose]);
+  }), [safe, flashOnly, purpose, faction, era, collectibleOnly]);
 
   // Counts independientes del filtro activo: pool sin filtros (compartido vía
   // React Query con cualquier otro consumidor que pida lo mismo). Así los chips
@@ -429,12 +550,26 @@ export const LaptopAdvisorCatalog = ({
   );
   const counts = useMemo(() => {
     const pool = countPool.length > 0 ? countPool : safe;
+    const c = { legendary: pool.filter(isFlashOffer).length };
+    c.collectible = pool.filter(p => p.is_collectible).length;
+    for (const { slug } of CATEGORIES) {
+      c[slug] = pool.filter(p => getPurpose(p) === slug).length;
+    }
+    return c;
+  }, [countPool, safe]);
+
+  // Valores de facción/era derivados del pool (sin endpoint dedicado).
+  const { factions, eras } = useMemo(() => {
+    const pool = countPool.length > 0 ? countPool : safe;
+    const f = {};
+    const e = {};
+    for (const p of pool) {
+      if (p.faction) f[p.faction] = (f[p.faction] || 0) + 1;
+      if (p.era) e[p.era] = (e[p.era] || 0) + 1;
+    }
     return {
-      legendary: pool.filter(isFlashOffer).length,
-      figura:    pool.filter(p => getPurpose(p) === 'figura').length,
-      sable:     pool.filter(p => getPurpose(p) === 'sable').length,
-      casco:     pool.filter(p => getPurpose(p) === 'casco').length,
-      lego:      pool.filter(p => getPurpose(p) === 'lego').length,
+      factions: Object.entries(f).sort((a, b) => b[1] - a[1]),
+      eras: Object.entries(e).sort((a, b) => b[1] - a[1]),
     };
   }, [countPool, safe]);
 
@@ -523,6 +658,14 @@ export const LaptopAdvisorCatalog = ({
             onSelectQuadrant={setSelectedQuadrant}
             purposeFilter={purposeFilter}
             setPurposeFilter={setPurposeFilter}
+            factions={factions}
+            faction={faction}
+            setFaction={setFaction}
+            eras={eras}
+            era={era}
+            setEra={setEra}
+            collectibleOnly={collectibleOnly}
+            setCollectibleOnly={setCollectibleOnly}
           />
         ) : (
           <Sidebar
@@ -531,6 +674,14 @@ export const LaptopAdvisorCatalog = ({
             onSelectQuadrant={setSelectedQuadrant}
             purposeFilter={purposeFilter}
             setPurposeFilter={setPurposeFilter}
+            factions={factions}
+            faction={faction}
+            setFaction={setFaction}
+            eras={eras}
+            era={era}
+            setEra={setEra}
+            collectibleOnly={collectibleOnly}
+            setCollectibleOnly={setCollectibleOnly}
           />
         )}
 

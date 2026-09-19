@@ -11,26 +11,50 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const { mutate: googleLogin, isPending } = useGoogleLogin();
 
+  const callbackRef = useRef(null);
+  callbackRef.current = (credential) => {
+    setError('');
+    googleLogin(credential, {
+      onSuccess: () => navigate('/'),
+      onError: () => setError('No se pudo iniciar sesión. Intenta de nuevo.'),
+    });
+  };
+
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID || !window.google) return;
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: ({ credential }) => {
-        setError('');
-        googleLogin(credential, {
-          onSuccess: () => navigate('/'),
-          onError: () => setError('No se pudo iniciar sesión. Intenta de nuevo.'),
-        });
-      },
-    });
-    window.google.accounts.id.renderButton(googleBtn.current, {
-      theme: 'outline',
-      size: 'large',
-      width: '100%',
-      text: 'signin_with',
-      shape: 'rectangular',
-    });
-  }, []);
+    if (!GOOGLE_CLIENT_ID) return;
+
+    const render = () => {
+      if (!window.google?.accounts?.id || !googleBtn.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: ({ credential }) => callbackRef.current(credential),
+      });
+      window.google.accounts.id.renderButton(googleBtn.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        text: 'signin_with',
+        shape: 'rectangular',
+      });
+    };
+
+    // El script GSI se carga con async en index.html: puede no estar listo al
+    // montar el componente (causa el "tengo que refrescar para loguearme").
+    // Esperamos a que esté disponible en lugar de salir y no renderizar nunca.
+    if (window.google?.accounts?.id) {
+      render();
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      if (window.google?.accounts?.id) {
+        window.clearInterval(interval);
+        render();
+      }
+    }, 150);
+
+    return () => window.clearInterval(interval);
+  }, [GOOGLE_CLIENT_ID]);
 
   return (
     <div style={{

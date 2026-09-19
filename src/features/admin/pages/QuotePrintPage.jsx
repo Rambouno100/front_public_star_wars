@@ -4,6 +4,7 @@ import { FileDown, Search, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { adminListOrders, adminGetOrder } from '../api';
+import { INVOICING_ENABLED } from '../../../shared/lib/features';
 
 /* ── Design tokens (mismos que la página) ─────────────────────── */
 const INK      = '#0A0A0B';
@@ -71,7 +72,7 @@ const buildQuoteHTML = (order) => {
         ${DROP_LOGO}
         <div>
           <div style="font-family:${fDisplay};font-weight:600;font-size:22px;letter-spacing:-0.02em;color:${CREAM};line-height:1;">Armalo</div>
-          <div style="margin-top:6px;">${micro('S.A.C.S · RUC 20613999818')}</div>
+          <div style="margin-top:6px;">${micro(INVOICING_ENABLED ? 'S.A.C.S · RUC 20613999818' : 'Lima · Perú')}</div>
         </div>
       </div>
       <div style="text-align:right;">
@@ -313,7 +314,7 @@ const QuotePrintPage = () => {
                     <span dangerouslySetInnerHTML={{ __html: DROP_LOGO }} />
                     <div>
                       <div style={{ fontFamily: fDisplay, fontWeight: 600, fontSize: 16, letterSpacing: '-0.02em', color: CREAM }}>Armalo</div>
-                      <div style={{ fontFamily: fMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: FAINT, marginTop: 3 }}>RUC 20613999818</div>
+                      <div style={{ fontFamily: fMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: FAINT, marginTop: 3 }}>{INVOICING_ENABLED ? 'RUC 20613999818' : 'Lima · Perú'}</div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>

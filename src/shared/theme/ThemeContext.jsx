@@ -3,18 +3,17 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 const STORAGE_KEY = 'gm-theme';
 
 const ThemeContext = createContext({
-  theme: 'dark',
+  theme: 'light',
   toggleTheme: () => {},
   setTheme: () => {},
 });
 
 const getInitialTheme = () => {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   const stored = window.localStorage.getItem(STORAGE_KEY);
   if (stored === 'light' || stored === 'dark') return stored;
-  // Sin preferencia guardada: respeta el SO, con oscuro por defecto.
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
-  return 'dark';
+  // Sin preferencia guardada: claro por defecto.
+  return 'light';
 };
 
 const applyTheme = (theme) => {

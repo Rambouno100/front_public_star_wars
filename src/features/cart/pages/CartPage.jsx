@@ -4,6 +4,7 @@ import DireccionEnvio from '../../checkout/components/DireccionEnvio';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useCurrentCart, useCart } from '../hooks/useCart';
 import client from '../../../shared/api/client';
+import { INVOICING_ENABLED } from '../../../shared/lib/features';
 
 /* ── Design tokens (temáticos — ver src/index.css) ─────────────── */
 const INK      = 'var(--bg-ink)';
@@ -70,11 +71,14 @@ const buildWhatsappMessage = (orden, lineas) => {
   const comprobante = orden.invoice_type === 'factura'
     ? `Factura — RUC ${orden.ruc ?? ''} / ${orden.razon_social ?? ''}`
     : 'Boleta';
-  return `Hola! Quiero pagar mi orden ${orden.name ?? `#${orden.id_salesorder ?? orden.id}`} por transferencia.\n\n${items}\n\nTotal: S/ ${total}\nEntrega: ${entrega}\nComprobante: ${comprobante}\n\n¿Me pasan los datos de cuenta? Gracias.`;
+  const lineaComprobante = INVOICING_ENABLED ? `\nComprobante: ${comprobante}` : '';
+  return `Hola! Quiero pagar mi orden ${orden.name ?? `#${orden.id_salesorder ?? orden.id}`} por transferencia.\n\n${items}\n\nTotal: S/ ${total}\nEntrega: ${entrega}${lineaComprobante}\n\n¿Me pasan los datos de cuenta? Gracias.`;
 };
 
 const StepIndicator = ({ current, isMobile }) => {
-  const steps = ['Productos', 'Entrega', 'Comprobante', 'Pago'];
+  const steps = INVOICING_ENABLED
+    ? ['Productos', 'Entrega', 'Comprobante', 'Pago']
+    : ['Productos', 'Entrega', 'Pago'];
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, marginBottom: 32, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
       {steps.map((label, i) => {
@@ -164,7 +168,7 @@ const CartPage = () => {
       setError('Selecciona una dirección o cambia a recojo en tienda.');
       return;
     }
-    if (invoiceType === 'factura' && (!ruc.trim() || !razonSocial.trim())) {
+    if (INVOICING_ENABLED && invoiceType === 'factura' && (!ruc.trim() || !razonSocial.trim())) {
       setError('Para factura completa el RUC y la razón social.');
       return;
     }
@@ -175,9 +179,10 @@ const CartPage = () => {
         state: 'pending_payment',
         payment_method: paymentMethod,
         delivery_type: deliveryType,
-        invoice_type: invoiceType,
-        ruc: invoiceType === 'factura' ? ruc.trim() : null,
-        razon_social: invoiceType === 'factura' ? razonSocial.trim() : null,
+        // Sin emisión de comprobantes: se manda boleta por defecto y sin datos fiscales.
+        invoice_type: INVOICING_ENABLED ? invoiceType : 'boleta',
+        ruc: INVOICING_ENABLED && invoiceType === 'factura' ? ruc.trim() : null,
+        razon_social: INVOICING_ENABLED && invoiceType === 'factura' ? razonSocial.trim() : null,
       };
       // address_id solo si es delivery; en pickup no aplica.
       if (deliveryType === 'delivery' && direccionSeleccionada) {
@@ -211,9 +216,11 @@ const CartPage = () => {
 
   // Estado del paso "Entrega": completo si pickup o si delivery con dirección.
   const stepDone2 = deliveryType === 'pickup' || (deliveryType === 'delivery' && !!direccionSeleccionada);
-  const facturaOk = invoiceType === 'boleta' || (ruc.trim().length === 11 && razonSocial.trim().length > 0);
+  const facturaOk = !INVOICING_ENABLED || invoiceType === 'boleta' || (ruc.trim().length === 11 && razonSocial.trim().length > 0);
   const stepDone3 = stepDone2 && facturaOk;
-  const currentStep = stepDone3 ? 3 : (stepDone2 ? 2 : (lineas.length > 0 ? 1 : 0));
+  const currentStep = INVOICING_ENABLED
+    ? (stepDone3 ? 3 : (stepDone2 ? 2 : (lineas.length > 0 ? 1 : 0)))
+    : (stepDone2 ? 2 : (lineas.length > 0 ? 1 : 0));
   const canConfirm = stepDone2 && facturaOk && !confirming;
 
   if (loading) return <CenterPane><Micro>Cargando carrito…</Micro></CenterPane>;
@@ -357,7 +364,8 @@ const CartPage = () => {
           )}
         </section>
 
-        {/* Comprobante: boleta / factura */}
+        {/* Comprobante: boleta / factura — oculto mientras INVOICING_ENABLED sea false */}
+        {INVOICING_ENABLED && (
         <section style={{ background: PANEL, border: `1px solid ${HAIRLINE}`, padding: isMobile ? '20px' : '28px 32px', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <span style={{ width: 22, height: 22, background: ACCENT, color: INK, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: fMono, fontSize: 11, fontWeight: 600 }}>3</span>
@@ -389,11 +397,12 @@ const CartPage = () => {
             </div>
           )}
         </section>
+        )}
 
         {/* Payment method */}
         <section style={{ background: PANEL, border: `1px solid ${HAIRLINE}`, padding: isMobile ? '20px' : '28px 32px', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <span style={{ width: 22, height: 22, background: ACCENT, color: INK, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: fMono, fontSize: 11, fontWeight: 600 }}>4</span>
+            <span style={{ width: 22, height: 22, background: ACCENT, color: INK, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: fMono, fontSize: 11, fontWeight: 600 }}>{INVOICING_ENABLED ? 4 : 3}</span>
             <h2 style={{ fontFamily: fBody, fontSize: 16, fontWeight: 600, color: CREAM, margin: 0, letterSpacing: '-0.01em' }}>Método de pago</h2>
           </div>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useProducts } from '../../catalog/hooks/useProducts';
 import { LaptopAdvisorCatalog } from '../../catalog/components/LaptopAdvisorCatalog';
 import logoUrl from '../../../assets/logo.svg';   // ← LOGO DE ORIGEN ÚNICO (cámbialo en src/assets/logo.svg)
+import { INVOICING_ENABLED } from '../../../shared/lib/features';
 
 /* ── Design tokens (unificados con LaptopAdvisorCatalog) ────── */
 const INK      = 'var(--bg-ink)';
@@ -108,7 +109,7 @@ const Hero = () => {
         {/* Eyebrow */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 32 }}>
           <div style={{ width: 28, height: 1, background: ACCENT_DIM }} />
-          <Micro>Los más vendidos · Stock listo · Envío a todo el Perú</Micro>
+          <Micro style={{ whiteSpace: 'normal' }}>Stock listo · Envío a todo el Perú</Micro>
         </div>
 
         {/* Headline (estilo login: weight 300 + strong) */}
@@ -149,7 +150,6 @@ const Trust = () => {
   const items = [
     { num: '200+',  label: 'Clientes' },
     { num: <span style={{ color: ACCENT, letterSpacing: '0.06em', fontSize: 18 }}>★★★★★</span>, label: '5.0 en Facebook' },
-    { num: '1 año', label: 'Garantía' },
     { num: '100%',  label: 'Originales' },
     { num: 'IGV',   label: 'Incluido' },
   ];
@@ -339,15 +339,9 @@ const Footer = () => {
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
             }}>
-              <img src={logoUrl} alt="Armalo" width="18" height="18" style={{ display: 'block' }} />
-              <span style={{
-                fontFamily: fDisplay, fontWeight: 600, fontSize: 15,
-                letterSpacing: '-0.02em', color: CREAM,
-              }}>
-                Armalo
-              </span>
+              <img src={logoUrl} alt="Armalo" width="63" height="24" style={{ display: 'block' }} />
             </div>
-            <Micro>Lima · Perú · RUC 20613999818</Micro>
+            <Micro>{INVOICING_ENABLED ? 'Lima · Perú · RUC 20613999818' : 'Lima · Perú'}</Micro>
           </div>
 
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>

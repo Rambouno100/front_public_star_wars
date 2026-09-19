@@ -47,7 +47,7 @@ const jaccard = (a, b) => {
   return inter / (ta.size + tb.size - inter);
 };
 
-const isFlash = (p) => p?.approved === true || p?.approved === 'true';
+const isFlash = (p) => p?.approved === 'Price/Quality' || p?.approved === 'true' || p?.approved === true;
 
 const getPurpose = (p) => {
   for (const v of [p?.category, p?.type, p?.purpose]) {
@@ -124,6 +124,22 @@ const computeScore = (current, candidate) => {
   return relevance * 0.60 + business * 0.40;
 };
 
+/* ── Por qué recomendamos cada pieza (etiqueta de afinidad) ──── */
+const reasonFor = (current, cand) => {
+  const factionMatch = current.faction && cand.faction &&
+    String(current.faction).toLowerCase() === String(cand.faction).toLowerCase();
+  const eraMatch = current.era && cand.era &&
+    String(current.era).toLowerCase() === String(cand.era).toLowerCase();
+  const charMatch = current.character_related && cand.character_related &&
+    jaccard(current.character_related, cand.character_related) > 0.4;
+
+  if (factionMatch) return 'Misma facción';
+  if (eraMatch) return 'Misma era';
+  if (charMatch) return 'Mismo personaje';
+  if (cand.is_collectible) return 'Coleccionable';
+  return 'Recomendado';
+};
+
 /* ── Compact recommendation card ─────────────────────────────── */
 // Mismo lenguaje visual que ProductCard en LaptopAdvisorCatalog:
 // brand → title → badge (si aplica) → price/discount. El badge va en el cuerpo,
@@ -143,10 +159,8 @@ const FlashBadge = () => (
   </span>
 );
 
-const RecCard = ({ product, onClick }) => {
+const RecCard = ({ product, onClick, reason }) => {
   const [hovered, setHovered] = useState(false);
-  // eslint-disable-next-line no-console
-  console.log('[REC]', product.name?.slice(0, 40), { main_image: product.main_image, imgs_count: product.images?.length, imgs_orders: product.images?.map(i => ({ order: i.order, url: i.url?.slice(-30) })) });
   const price = num(product.price_offer ?? product.price);
   const market = product.price_offer ? num(product.price) : null;
   const discount = market && market > price ? Math.round((1 - price / market) * 100) : 0;
@@ -217,6 +231,19 @@ const RecCard = ({ product, onClick }) => {
           {product.name}
         </h4>
 
+        {/* Reason — por qué lo recomendamos */}
+        <div style={{ minHeight: 16, marginBottom: 8 }}>
+          {reason && (
+            <span style={{
+              fontFamily: fMono, fontSize: 9, fontWeight: 400,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: ACCENT,
+            }}>
+              {reason}
+            </span>
+          )}
+        </div>
+
         {/* Badge — reserva altura aunque no exista, para alineación entre cards */}
         <div style={{ minHeight: 22, marginBottom: 10 }}>
           {flash && <FlashBadge />}
@@ -272,6 +299,10 @@ export const ProductRecommendations = ({ currentProduct }) => {
 
   const purpose = getPurpose(currentProduct);
 
+  const affinityParts = [currentProduct?.faction, currentProduct?.era, currentProduct?.character_related]
+    .filter(v => v && String(v).trim());
+  const affinityLine = affinityParts.length > 0 ? `Basado en ${affinityParts.join(' · ')}` : null;
+
   // Pedimos un pool amplio (idealmente del mismo purpose para que el ranking del
   // back ya nos dé candidatos relevantes). Si no hay purpose, fetch general.
   const { data } = useProducts({
@@ -296,10 +327,9 @@ export const ProductRecommendations = ({ currentProduct }) => {
       return true;
     });
     return candidates
-      .map(c => ({ p: c, s: computeScore(currentProduct, c) }))
+      .map(c => ({ p: c, s: computeScore(currentProduct, c), reason: reasonFor(currentProduct, c) }))
       .sort((a, b) => b.s - a.s || num(b.p.score) - num(a.p.score))
-      .slice(0, 8)
-      .map(({ p }) => p);
+      .slice(0, 8);
   }, [pool, currentProduct]);
 
   // Track scroll edges para mostrar/ocultar flechas
@@ -337,7 +367,7 @@ export const ProductRecommendations = ({ currentProduct }) => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
               <div style={{ width: 24, height: 1, background: 'var(--accent-dim)' }} />
-              <Micro color={ACCENT}>Recomendado para ti</Micro>
+              <Micro color={ACCENT}>Completa tu colección</Micro>
             </div>
             <h2 style={{
               fontFamily: fDisplay, fontWeight: 300,
@@ -345,8 +375,16 @@ export const ProductRecommendations = ({ currentProduct }) => {
               letterSpacing: '-0.025em', color: CREAM,
               margin: 0, lineHeight: 1.15,
             }}>
-              También podrían <strong style={{ fontWeight: 600 }}>interesarte.</strong>
+              Completa tu <strong style={{ fontWeight: 600 }}>colección.</strong>
             </h2>
+            {affinityLine && (
+              <p style={{
+                fontFamily: fBody, fontSize: 13, color: MUTED,
+                margin: '10px 0 0', lineHeight: 1.5,
+              }}>
+                {affinityLine}
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -395,10 +433,11 @@ export const ProductRecommendations = ({ currentProduct }) => {
             scrollbarWidth: 'none',
           }}
         >
-          {recs.map(p => (
+          {recs.map(({ p, reason }) => (
             <RecCard
               key={p.id_product ?? p.id}
               product={p}
+              reason={reason}
               onClick={() => { navigate(`/product/${p.id_product ?? p.id}`); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             />
           ))}

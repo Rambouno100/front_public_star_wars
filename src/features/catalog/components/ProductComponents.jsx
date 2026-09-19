@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Minus, Plus, ChevronLeft, ChevronRight, Lock, ZoomIn } from 'lucide-react';
+import { Minus, Plus, ChevronLeft, ChevronRight, Lock, ZoomIn, Star as StarIcon } from 'lucide-react';
 import { useCart } from '../../cart/hooks/useCart';
 import { ProductRecommendations } from './ProductRecommendations';
+import { INVOICING_ENABLED } from '../../../shared/lib/features';
 
 /* ── Design tokens ───────────────────────────────────────────── */
 const INK      = 'var(--bg-ink)';
@@ -39,6 +40,62 @@ const Micro = ({ children, color = FAINT, style = {} }) => (
     {children}
   </span>
 );
+
+const STAR = '#FFB547';
+
+/* ── Rating helpers ──────────────────────────────────────────── */
+// `score` llega en distintas escalas según el origen (0-5, 0-10, 0-100).
+// Normalizamos a 0-5 de forma defensiva.
+const toFive = (score) => {
+  const s = parseFloat(score);
+  if (!Number.isFinite(s)) return null;
+  if (s <= 5) return s;
+  if (s <= 10) return s / 2;
+  return s / 20;
+};
+
+/* ── Estrellas estilo Amazon (soporta medias) ────────────────── */
+const Stars = ({ score, size = 13 }) => {
+  const value = toFive(score);
+  if (value == null) return null;
+  const clamped = Math.max(0, Math.min(5, value));
+  return (
+    <span style={{ display: 'inline-flex', gap: 1, alignItems: 'center' }} aria-label={`${clamped.toFixed(1)} de 5`}>
+      {Array.from({ length: 5 }).map((_, i) => {
+        const fill = Math.max(0, Math.min(1, clamped - i));
+        return (
+          <span key={i} style={{ position: 'relative', display: 'inline-block', width: size, height: size, lineHeight: 0 }}>
+            <StarIcon size={size} style={{ fill: 'rgba(245,245,240,0.18)', color: 'rgba(245,245,240,0.18)' }} />
+            {fill > 0 && (
+              <span style={{ position: 'absolute', inset: 0, overflow: 'hidden', width: `${fill * 100}%` }}>
+                <StarIcon size={size} style={{ fill: STAR, color: STAR }} />
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+};
+
+/* ── Estado de stock (escasez / urgencia) ────────────────────── */
+const getStockState = (product) => {
+  const stock = parseInt(product?.stock ?? 0, 10);
+  if (!Number.isFinite(stock) || stock <= 0) return { state: 'out', label: 'Agotado' };
+  if (stock <= 2) return { state: 'low', label: `Quedan ${stock} unidad${stock > 1 ? 'es' : ''}` };
+  return { state: 'in', label: 'En stock' };
+};
+
+const StockStatus = ({ product }) => {
+  const { state, label } = getStockState(product);
+  const dot = state === 'in' ? '#4ADE80' : state === 'low' ? STAR : RED;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+      <Micro color={state === 'out' ? FAINT : MUTED}>{label}</Micro>
+    </div>
+  );
+};
 
 /* ── Cart button (estado-aware) ──────────────────────────────── */
 export const CartButton = ({ product, cartHook }) => {
@@ -161,7 +218,7 @@ export const CartButton = ({ product, cartHook }) => {
 /* ── WhatsApp button ─────────────────────────────────────────── */
 export const WhatsAppButton = ({ product }) => {
   const price = product.price_offer || product.price;
-  const msg = `Hola, me interesa esta laptop:\n\n*${product.name}*\nPrecio: S/${price}\n\n¿Podrías darme más información?`;
+  const msg = `Hola, me interesa este producto:\n\n*${product.name}*\nPrecio: S/${price}\n\n¿Podrías darme más información?`;
   const [hov, setHov] = useState(false);
   return (
     <a
@@ -234,14 +291,8 @@ export const ImageCarousel = ({ images, productName }) => {
   const imgSrc = images[current]?.image || images[current];
   const btnSize = isMobile ? 44 : 36;
 
-  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX; touchY.current = e.touches[0].clientY; };
-  const onTouchEnd = (e) => {
-    if (touchX.current == null || images.length < 2) return;
-    const dx = e.changedTouches[0].clientX - touchX.current;
-    const dy = e.changedTouches[0].clientY - touchY.current;
-    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? next() : prev());
-    touchX.current = null;
-  };
+  // Swipe desactivado: en mobile el gesto se reserva 100% para pinch-zoom cómodo.
+  // La navegación entre fotos queda por flechas y miniaturas.
   const onMove = (e) => {
     if (isMobile || !zoom) return;
     const r = e.currentTarget.getBoundingClientRect();
@@ -266,8 +317,6 @@ export const ImageCarousel = ({ images, productName }) => {
 
         {/* Main image */}
         <div
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
           onClick={toggleZoom}
           onMouseMove={onMove}
           style={{
@@ -275,7 +324,7 @@ export const ImageCarousel = ({ images, productName }) => {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             minHeight: isMobile ? 280 : 320, overflow: 'hidden',
             cursor: isMobile ? 'default' : (zoom ? 'move' : 'zoom-in'),
-            touchAction: 'pan-y',
+            touchAction: 'manipulation',
           }}>
           <img
             src={imgSrc}
@@ -441,6 +490,7 @@ export const ImageCarousel = ({ images, productName }) => {
               maxHeight: isMobile ? '80vh' : '88vh',
               objectFit: 'contain',
               userSelect: 'none',
+              touchAction: 'manipulation',
             }}
           />
 
@@ -541,6 +591,8 @@ export const ProductDetail = ({ product, onBack, cartHook }) => {
   const originalPrice = product.price_offer ? parseFloat(product.price) : null;
   const savingsPct = originalPrice ? Math.round((1 - price / originalPrice) * 100) : null;
   const cardPrice = product.price_offer ? +(price * 1.035).toFixed(2) : null;
+  const stockState = getStockState(product);
+  const ratingValue = toFive(product.score);
 
   const specs = [
     { label: 'Marca',     value: product.brand },
@@ -635,6 +687,29 @@ export const ProductDetail = ({ product, onBack, cartHook }) => {
             }}>
               {product.name}
             </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 12, minHeight: 20 }}>
+              {ratingValue != null && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Stars score={product.score} />
+                  <span style={{ fontFamily: fMono, fontSize: 10, color: MUTED, letterSpacing: '0.04em' }}>
+                    {ratingValue.toFixed(1)}
+                  </span>
+                </div>
+              )}
+              {product.is_collectible && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center',
+                  padding: '3px 8px',
+                  background: 'var(--accent-tint)', color: ACCENT,
+                  border: '1px solid var(--accent-tint)',
+                  fontFamily: fBody, fontSize: 10, fontWeight: 600,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  lineHeight: 1.2, whiteSpace: 'nowrap',
+                }}>
+                  Edición Coleccionable
+                </span>
+              )}
+            </div>
             {product.condition && (
               <Micro>{product.condition}</Micro>
             )}
@@ -684,9 +759,25 @@ export const ProductDetail = ({ product, onBack, cartHook }) => {
             )}
           </div>
 
-          {/* CTAs */}
+          {/* Stock + CTAs */}
+          <StockStatus product={product} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <CartButton product={product} cartHook={cartHook} />
+            {stockState.state === 'out' ? (
+              <button
+                disabled
+                style={{
+                  width: '100%', padding: '16px 0',
+                  background: 'var(--hairline)', color: FAINT, border: 'none',
+                  cursor: 'not-allowed',
+                  fontFamily: fBody, fontSize: 15, fontWeight: 700,
+                  letterSpacing: '-0.005em',
+                }}
+              >
+                Agotado
+              </button>
+            ) : (
+              <CartButton product={product} cartHook={cartHook} />
+            )}
             <WhatsAppButton product={product} />
           </div>
 
@@ -696,10 +787,9 @@ export const ProductDetail = ({ product, onBack, cartHook }) => {
             background: PANEL, border: `1px solid ${HAIRLINE}`,
           }}>
             {[
-              { n: 'Garantía 1 año', d: 'Desde hoy' },
-              { n: 'Envío gratis',   d: 'A todo Lima' },
               { n: '100% Original',  d: 'Verificado' },
-              { n: 'Boleta / Factura', d: 'En 24h' },
+              // Comprobantes: se muestra solo si podemos emitir (shared/lib/features).
+              ...(INVOICING_ENABLED ? [{ n: 'Boleta / Factura', d: 'En 24h' }] : []),
             ].map(({ n, d }, i) => (
               <div key={n} style={{
                 padding: '16px',
@@ -796,7 +886,18 @@ export const ProductDetail = ({ product, onBack, cartHook }) => {
             </div>
           </div>
           <div style={{ flex: 1 }}>
-            <CartButton product={product} cartHook={cartHook} />
+            {stockState.state === 'out' ? (
+              <div style={{
+                width: '100%', padding: '16px 0',
+                background: 'var(--hairline)', color: FAINT,
+                textAlign: 'center',
+                fontFamily: fBody, fontSize: 15, fontWeight: 700,
+              }}>
+                Agotado
+              </div>
+            ) : (
+              <CartButton product={product} cartHook={cartHook} />
+            )}
           </div>
         </div>
       )}

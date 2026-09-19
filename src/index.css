@@ -9,24 +9,24 @@
    tailwind.config.js apuntan a estas variables).
    ────────────────────────────────────────────────────────────────────────── */
 :root {
-  /* DARK (default) */
-  --bg-ink-rgb: 10 10 11;
-  --bg-elev-rgb: 21 21 27;
+  /* DARK (default) — Azul Armalo */
+  --bg-ink-rgb: 11 16 32;      /* #0B1020 azul casi negro */
+  --bg-elev-rgb: 16 25 46;     /* #10192E */
   --text-rgb: 245 245 240;
-  --accent-rgb: 245 245 240;   /* acción primaria = blanco sobre oscuro */
-  --danger-rgb: 255 107 107;
+  --accent-rgb: 120 178 255;   /* #78B2FF azul claro = acción/acento */
+  --danger-rgb: 255 91 95;     /* #FF5B5F rojo = ofertas/relámpago/descuentos */
 
-  --bg-panel: #0F0F12;
-  --ink-solid: #050507;
+  --bg-panel: #10192E;
+  --ink-solid: #070B16;
 }
 
 :root[data-theme="light"] {
-  /* LIGHT (similar al claro de Armalo) */
-  --bg-ink-rgb: 245 245 240;
+  /* LIGHT (default de Armalo) — Azul Armalo */
+  --bg-ink-rgb: 247 247 244;   /* #F7F7F4 hueso */
   --bg-elev-rgb: 240 239 234;
-  --text-rgb: 10 10 11;
-  --accent-rgb: 10 10 11;      /* acción primaria = negro sobre claro */
-  --danger-rgb: 209 49 49;
+  --text-rgb: 10 16 32;        /* #0A1020 tinta */
+  --accent-rgb: 0 74 173;      /* #004AAD azul marca */
+  --danger-rgb: 225 6 0;       /* #E10600 rojo = ofertas/relámpago/descuentos */
 
   --bg-panel: #FFFFFF;
   --ink-solid: #FFFFFF;

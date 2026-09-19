@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { INVOICING_ENABLED } from '../../../shared/lib/features';
 
 /* ── Design tokens (sistema dark) ────────────────────────────── */
 const INK      = 'var(--bg-ink)';
@@ -116,8 +117,9 @@ const OrderConfirmation = () => {
           border: `1px solid ${HAIRLINE}`,
         }}>
           {[
-            { n: 'Boleta / Factura', d: 'Emitida en 24h' },
-            { n: 'Garantía 1 año',   d: 'Desde hoy' },
+            // Comprobantes: se muestra solo si podemos emitir (shared/lib/features).
+            ...(INVOICING_ENABLED ? [{ n: 'Boleta / Factura', d: 'Emitida en 24h' }] : []),
+            { n: '100% Original',    d: 'Verificado' },
           ].map(({ n, d }, i) => (
             <div key={n} style={{
               padding: '18px 14px', textAlign: 'center',
