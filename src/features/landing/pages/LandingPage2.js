@@ -84,13 +84,38 @@ const Btn = ({ href, to, onClick, children, primary = false }) => {
 
 /* ── HERO ────────────────────────────────────────────────────── */
 const Hero = () => {
-  const { isMobile } = useBreakpoint();
+  const { isMobile, isTablet } = useBreakpoint();
+  const [hov, setHov] = useState(false);
+  const { data } = useProducts({ limit: 200 });
+
+  // Producto destacado = el de MAYOR descuento (%) del catálogo.
+  // Fallback: si nadie tiene descuento, el primero del ranking.
+  const featured = useMemo(() => {
+    const pool = data?.pages?.flatMap(p => p.items) ?? [];
+    if (pool.length === 0) return null;
+    const withDiscount = pool
+      .map(p => {
+        const price = parseFloat(p.price ?? 0);
+        const offer = p.price_offer != null ? parseFloat(p.price_offer) : null;
+        const disc = offer && price > 0 && offer < price ? (1 - offer / price) * 100 : 0;
+        return { p, disc };
+      })
+      .filter(x => x.disc > 0)
+      .sort((a, b) => b.disc - a.disc);
+    return withDiscount.length > 0 ? withDiscount[0].p : pool[0];
+  }, [data]);
+
+  const featuredPrice = featured ? parseFloat(featured.price_offer ?? featured.price ?? 0) : 0;
+  const featuredOriginal = featured?.price_offer != null ? parseFloat(featured.price ?? 0) : null;
+  const featuredDiscount = featuredOriginal && featuredOriginal > featuredPrice
+    ? Math.round((1 - featuredPrice / featuredOriginal) * 100)
+    : 0;
 
   return (
     <section style={{
       background: INK,
       borderBottom: `1px solid ${HAIRLINE}`,
-      padding: isMobile ? '88px 24px 64px' : '136px 80px 96px',
+      padding: isMobile ? '72px 24px 64px' : '120px 80px 96px',
       position: 'relative',
       overflow: 'hidden',
     }}>
@@ -104,40 +129,155 @@ const Hero = () => {
         pointerEvents: 'none',
       }} />
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative' }}>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto', position: 'relative',
+        display: 'grid',
+        gridTemplateColumns: isTablet ? '1fr' : '1.05fr 0.95fr',
+        gap: isTablet ? 40 : 64,
+        alignItems: 'center',
+      }}>
 
-        {/* Eyebrow */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 32 }}>
-          <div style={{ width: 28, height: 1, background: ACCENT_DIM }} />
-          <Micro style={{ whiteSpace: 'normal' }}>Stock listo · Envío a todo el Perú</Micro>
+        {/* Left — copy */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 32 }}>
+            <div style={{ width: 28, height: 1, background: ACCENT_DIM }} />
+            <Micro style={{ whiteSpace: 'normal' }}>Construcción · Cascos · Llaveros · Pósters</Micro>
+          </div>
+
+          <h1 style={{
+            fontFamily: fDisplay, fontWeight: 300,
+            fontSize: 'clamp(40px, 7vw, 88px)',
+            letterSpacing: '-0.035em', lineHeight: 1.02,
+            color: CREAM, margin: '0 0 28px',
+            maxWidth: 920,
+          }}>
+            Ármalo hoy.{' '}
+            <strong style={{ fontWeight: 600 }}>Exhíbelo siempre.</strong>
+          </h1>
+
+          <p style={{
+            fontFamily: fBody, fontSize: 'clamp(15px, 1.2vw, 17px)',
+            color: MUTED, lineHeight: 1.65,
+            margin: '0 0 48px', maxWidth: 520,
+          }}>
+            Sets de bloques, cascos, llaveros y piezas de colección para armar. Originales, en caja sellada y con envío a todo el Perú.
+          </p>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {!isMobile && <Btn href={WA} primary>Cotizar por WhatsApp</Btn>}
+            <Btn to="/catalogo">Ver catálogo</Btn>
+          </div>
         </div>
 
-        {/* Headline (estilo login: weight 300 + strong) */}
-        <h1 style={{
-          fontFamily: fDisplay, fontWeight: 300,
-          fontSize: 'clamp(40px, 7vw, 88px)',
-          letterSpacing: '-0.035em', lineHeight: 1.02,
-          color: CREAM, margin: '0 0 28px',
-          maxWidth: 920,
-        }}>
-          Hecho para armar.{' '}
-          <strong style={{ fontWeight: 600 }}>Diseñado para exhibir.</strong>
-        </h1>
+        {/* Right — featured product visual */}
+        {featured && (
+          <Link
+            to={`/product/${featured.id_product ?? featured.id}`}
+            onMouseEnter={() => setHov(true)}
+            onMouseLeave={() => setHov(false)}
+            style={{
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'stretch',
+              background: CARBON,
+              border: `1px solid ${hov ? HAIRLINE_STRONG : HAIRLINE}`,
+              textDecoration: 'none',
+              overflow: 'hidden',
+              transform: hov ? 'translateY(-4px)' : 'translateY(0)',
+              transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), border-color 0.3s, box-shadow 0.3s',
+              boxShadow: hov ? '0 20px 44px -14px rgba(0,0,0,0.6)' : 'none',
+            }}
+          >
+            {/* Image */}
+            <div style={{
+              background: '#FFFFFF',
+              aspectRatio: isMobile ? '1/1' : '4/3',
+              width: '100%',
+              flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden',
+            }}>
+              <img
+                src={featured.main_image ?? featured.img ?? featured.images?.[0]?.image ?? ''}
+                alt={featured.name}
+                loading="eager"
+                style={{
+                  maxWidth: '88%', maxHeight: '88%',
+                  width: 'auto', height: 'auto',
+                  objectFit: 'contain',
+                  transform: hov ? 'scale(1.04)' : 'scale(1)',
+                  transition: 'transform 0.5s ease',
+                }}
+                onError={e => { e.target.style.display = 'none'; }}
+              />
+            </div>
 
-        {/* Subhead */}
-        <p style={{
-          fontFamily: fBody, fontSize: 'clamp(15px, 1.2vw, 17px)',
-          color: MUTED, lineHeight: 1.65,
-          margin: '0 0 48px', maxWidth: 520,
-        }}>
-          Sets de bloques, cascos, llaveros y posters de colección. Piezas que arman horas de calma y quedan increíbles en tu repisa. Envío rápido, caja sellada.
-        </p>
+            {/* Body */}
+            <div style={{ padding: '20px 22px 22px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 20, height: 1, background: 'var(--accent-dim)' }} />
+                  <Micro color={ACCENT}>Mayor descuento</Micro>
+                </div>
+                {featuredDiscount > 0 && (
+                  <span style={{
+                    fontFamily: fBody, fontSize: 15, fontWeight: 700,
+                    color: 'var(--danger)', letterSpacing: '-0.01em', lineHeight: 1,
+                  }}>
+                    -{featuredDiscount}%
+                  </span>
+                )}
+              </div>
 
-        {/* CTAs */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Btn href={WA} primary>Cotizar por WhatsApp</Btn>
-          <Btn to="/catalogo">Ver catálogo</Btn>
-        </div>
+              <div style={{
+                fontFamily: fDisplay, fontWeight: 400, fontSize: 20,
+                color: CREAM, lineHeight: 1.3, letterSpacing: '-0.015em',
+                display: '-webkit-box', WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>
+                {featured.name}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: fMono, fontSize: 12, color: MUTED }}>S/</span>
+                <span style={{
+                  fontFamily: fDisplay, fontSize: 30, fontWeight: 500,
+                  color: CREAM, letterSpacing: '-0.025em', lineHeight: 1,
+                }}>
+                  {featuredPrice.toLocaleString('es-PE', { minimumFractionDigits: 0 })}
+                </span>
+                {featuredOriginal && (
+                  <span style={{
+                    fontFamily: fBody, fontSize: 12, color: FAINT,
+                    textDecoration: 'line-through', marginLeft: 2,
+                  }}>
+                    S/{featuredOriginal.toLocaleString('es-PE')}
+                  </span>
+                )}
+              </div>
+
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                paddingTop: 12, marginTop: 'auto',
+                borderTop: `1px solid ${HAIRLINE}`,
+              }}>
+                <span style={{
+                  fontFamily: fBody, fontSize: 12, fontWeight: 500,
+                  color: hov ? ACCENT : MUTED, transition: 'color 0.2s',
+                }}>
+                  Ver producto
+                </span>
+                <span style={{
+                  fontFamily: fBody, fontSize: 14,
+                  color: hov ? ACCENT : MUTED,
+                  transition: 'color 0.2s, transform 0.2s',
+                  transform: hov ? 'translateX(2px)' : 'translateX(0)',
+                }}>
+                  →
+                </span>
+              </div>
+            </div>
+          </Link>
+        )}
       </div>
     </section>
   );

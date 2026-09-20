@@ -563,6 +563,14 @@ export const ProductDetail = ({ product, onBack, cartHook }) => {
   const { isMobile } = useBreakpoint();
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
 
+  // Empuja el botón flotante de WhatsApp por encima de la barra fija de
+  // "Agregar al carrito" (mobile) para que no se tapen entre sí.
+  useEffect(() => {
+    if (!isMobile) return undefined;
+    document.documentElement.style.setProperty('--sticky-cta-offset', '76px');
+    return () => document.documentElement.style.removeProperty('--sticky-cta-offset');
+  }, [isMobile]);
+
   if (!product) return (
     <div style={{
       minHeight: '100vh', background: INK, fontFamily: fBody,
@@ -863,7 +871,7 @@ export const ProductDetail = ({ product, onBack, cartHook }) => {
       {isMobile && (
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 900,
-          background: 'rgba(15,15,18,0.92)', backdropFilter: 'blur(14px)',
+          background: 'var(--nav-bg-scrolled)', backdropFilter: 'saturate(180%) blur(20px)',
           borderTop: `1px solid ${HAIRLINE_STRONG}`,
           padding: '12px 16px calc(12px + env(safe-area-inset-bottom))',
           display: 'flex', alignItems: 'center', gap: 14,

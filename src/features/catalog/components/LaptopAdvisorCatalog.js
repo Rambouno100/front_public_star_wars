@@ -317,12 +317,23 @@ const FilterBar = ({
 /* ── Product Card (limpia, sin estrellas, imagen blanca) ─────── */
 const ProductCard = ({ product, onViewDetail }) => {
   const [hovered, setHovered] = useState(false);
+  const categoryLabel = CATEGORIES.find(c => c.slug === getPurpose(product))?.label;
   const tag = isFlashOffer(product)
     ? { label: 'Oferta Relámpago', variant: 'flash' }
-    : null;
+    : product.is_collectible
+      ? { label: 'Coleccionable', variant: 'cool' }
+      : categoryLabel
+        ? { label: categoryLabel, variant: 'neutral' }
+        : null;
   const price = parseFloat(product.price_offer ?? product.price_unit ?? product.price ?? 0);
   const originalPrice = product.price_offer ? parseFloat(product.price ?? product.price_unit ?? 0) : null;
   const discount = originalPrice && originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
+  const stock = parseInt(product.stock ?? 0, 10);
+  const stockLabel = stock <= 0
+    ? { text: 'Agotado', color: RED }
+    : stock <= 2
+      ? { text: 'Queda poco stock', color: '#FFB547' }
+      : null;
   const specs = [product.faction, product.era, product.character_related, product.description].filter(Boolean).join(' · ');
 
   return (
@@ -444,6 +455,19 @@ const ProductCard = ({ product, onViewDetail }) => {
                 S/{originalPrice.toLocaleString('es-PE')}
               </span>
             </div>
+          )}
+        </div>
+
+        {/* Stock / escasez — altura fija para alinear cards */}
+        <div style={{ minHeight: 14, marginBottom: 8 }}>
+          {stockLabel && (
+            <span style={{
+              fontFamily: fMono, fontSize: 9, fontWeight: 500,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: stockLabel.color,
+            }}>
+              {stockLabel.text}
+            </span>
           )}
         </div>
 

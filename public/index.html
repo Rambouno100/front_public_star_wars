@@ -6,7 +6,21 @@
     <link rel="alternate icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#FFFFFF" />
+
+    <!-- Tema: aplica data-theme antes del primer paint para evitar flash.
+         Por defecto claro (ver ThemeContext.jsx); respeta la preferencia guardada. -->
+    <script>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem('gm-theme');
+          var theme = (stored === 'light' || stored === 'dark') ? stored : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
     <meta name="description" content="Armalo - Sets para armar, bloques, posters, llaveros, cascos y coleccionables armables." />
     <link rel="manifest" href="/manifest.json" />
     <title>Armalo | Sets, bloques y coleccionables armables</title>
